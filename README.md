@@ -13,13 +13,13 @@ A few resources to get you started if this is your first Flutter project:
 
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+samples, guidance on mobile development, and a full API reference.<hr>
 
 Details
 
 Team:Radhe Radhe
 
-Members: [Govind kumar Yadav](https://github.com/Robertgovind), [Dhiraj Chaurasiya](https://github.com/dhirajchaurasiya10), Utkarsha Gupta, [Prabin Thapa](https://github.com/PYN-TUM) <br>
+Members: [Govind kumar Yadav](https://github.com/Robertgovind), [Dhiraj Chaurasiya](https://github.com/dhirajchaurasiya10), Utkarsha Gupta, [Prabin Thapa](https://github.com/PYN-TUM) <hr><br>
 
 # Running this project
 - Clone the project
@@ -31,7 +31,7 @@ Members: [Govind kumar Yadav](https://github.com/Robertgovind), [Dhiraj Chaurasi
   ```
   flutter run
   ```
-
+<hr>
 
 
 ![Screenshot_1687080490](https://github.com/Robertgovind/Progress-Feed-App-/assets/102906652/6f835329-d33a-4318-9208-29f518a1d22a)
