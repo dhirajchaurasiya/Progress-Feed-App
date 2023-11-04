@@ -19,7 +19,19 @@ Details
 
 Team:Radhe Radhe
 
-Members: [Govind kumar Yadav](https://github.com/Robertgovind), [Dhiraj Chaurasiya](https://github.com/dhirajchaurasiya10), Utkarsha Gupta, [Prabin Thapa](https://github.com/PYN-TUM)
+Members: [Govind kumar Yadav](https://github.com/Robertgovind), [Dhiraj Chaurasiya](https://github.com/dhirajchaurasiya10), Utkarsha Gupta, [Prabin Thapa](https://github.com/PYN-TUM) <br>
+
+# Running this project
+- Clone the project
+- Before runnning the application, run the following command:
+  ```
+  flutter pub get
+  ```
+- Then run the project with the following command:
+  ```
+  flutter run
+  ```
+
 
 
 ![Screenshot_1687080490](https://github.com/Robertgovind/Progress-Feed-App-/assets/102906652/6f835329-d33a-4318-9208-29f518a1d22a)
