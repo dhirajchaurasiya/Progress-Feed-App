@@ -1,129 +1,161 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart'; // Note: updated import for latlong
 
-// void main() {
-//   runApp(MyApp());
-// }
+void main() {
+  runApp(MyApp());
+}
 
-// class MyApp extends StatelessWidget{
-//   @override
-//   Widget build(BuildContext context) {
-//      return MaterialApp(
-//          home: Home()
-//       );
-//   }
-// }
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Home(),
+    );
+  }
+}
 
-class Home extends  StatefulWidget {
+class Home extends StatefulWidget {
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-
-  bool servicestatus = false;
-  bool haspermission = false;
+  bool serviceStatus = false;
+  bool hasPermission = false;
   late LocationPermission permission;
   late Position position;
-       String long = "", lat = "";
+  String longitude = "";
+  String latitude = "";
   late StreamSubscription<Position> positionStream;
 
-   @override
+  @override
   void initState() {
-    checkGps();
     super.initState();
+    checkGps();
   }
 
-  checkGps() async {
-      servicestatus = await Geolocator.isLocationServiceEnabled();
-      if(servicestatus){
-            permission = await Geolocator.checkPermission();
-          
-            if (permission == LocationPermission.denied) {
-                permission = await Geolocator.requestPermission();
-                if (permission == LocationPermission.denied) {
-                    print('Location permissions are denied');
-                }else if(permission == LocationPermission.deniedForever){
-                    print("'Location permissions are permanently denied");
-                }else{
-                   haspermission = true;
-                }
-            }else{
-               haspermission = true;
-            }
+  @override
+  void dispose() {
+    positionStream.cancel();
+    super.dispose();
+  }
 
-            if(haspermission){
-                setState(() {
-                  //refresh the UI
-                });
-
-                getLocation();
-            }
-      }else{
-        print("GPS Service is not enabled, turn on GPS location");
+  void checkGps() async {
+    serviceStatus = await Geolocator.isLocationServiceEnabled();
+    if (serviceStatus) {
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          print('Location permissions are denied');
+        } else if (permission == LocationPermission.deniedForever) {
+          print("'Location permissions are permanently denied");
+        } else {
+          hasPermission = true;
+        }
+      } else {
+        hasPermission = true;
       }
 
-      setState(() {
-         //refresh the UI
-      });
+      if (hasPermission) {
+        setState(() {});
+        getLocation();
+      }
+    } else {
+      print("GPS Service is not enabled, turn on GPS location");
+    }
   }
 
-  getLocation() async {
-      position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      print(position.longitude); //Output: 80.24599079
-      print(position.latitude); //Output: 29.6593457
+  void getLocation() async {
+    position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    longitude = position.longitude.toString();
+    latitude = position.latitude.toString();
 
-      long = position.longitude.toString();
-      lat = position.latitude.toString();
+    setState(() {});
 
-      setState(() {
-         //refresh UI
-      });
+    LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 100,
+    );
 
-      LocationSettings locationSettings = LocationSettings(
-            accuracy: LocationAccuracy.high, //accuracy of the location data
-            distanceFilter: 100, //minimum distance (measured in meters) a 
-                                 //device must move horizontally before an update event is generated;
-      );
-
-      StreamSubscription<Position> positionStream = Geolocator.getPositionStream(
-            locationSettings: locationSettings).listen((Position position) {
-            print(position.longitude); //Output: 80.24599079
-            print(position.latitude); //Output: 29.6593457
-
-            long = position.longitude.toString();
-            lat = position.latitude.toString();
-
-            setState(() {
-              //refresh UI on update
-            });
-      });
+    positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen((Position position) {
+      longitude = position.longitude.toString();
+      latitude = position.latitude.toString();
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-   
     return Scaffold(
-         appBar: AppBar(
-            title: Text("Get GPS Location"),
-            backgroundColor: Colors.redAccent
-         ),
-          body: Container(
-            alignment: Alignment.center,
-            padding: EdgeInsets.all(50),
-             child: Column(
-                children: [ 
-
-                     Text(servicestatus? "GPS is Enabled": "GPS is disabled."),
-                     Text(haspermission? "GPS is Enabled": "GPS is disabled."),
-                     
-                     Text("Longitude: $long", style:TextStyle(fontSize: 20)),
-                     Text("Latitude: $lat", style: TextStyle(fontSize: 20),)
-
-                ]
-              )
-          )
+      appBar: AppBar(
+        title: Text("Get GPS Location"),
+        backgroundColor: Colors.redAccent,
+      ),
+      body: Column(
+        children: [
+          Flexible(
+            flex: 1,
+            child: Container(
+              padding: EdgeInsets.all(8.0),
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: latitude.isNotEmpty && longitude.isNotEmpty
+                  ? FlutterMap(
+                      options: MapOptions(
+                        center: LatLng(
+                          double.tryParse(latitude) ?? 0.0,
+                          double.tryParse(longitude) ?? 0.0,
+                        ),
+                        zoom: 13.0,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          subdomains: ['a', 'b', 'c'],
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              width: 80.0,
+                              height: 80.0,
+                              point: LatLng(
+                                double.tryParse(latitude) ?? 0.0,
+                                double.tryParse(longitude) ?? 0.0,
+                              ),
+                              builder: (ctx) => Container(
+                                child: Icon(Icons.location_on, color: Colors.red, size: 40.0),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          Flexible(
+            flex: 1,
+            child: Container(
+              alignment: Alignment.center,
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(serviceStatus ? "GPS is Enabled" : "GPS is disabled."),
+                  Text(hasPermission ? "GPS is Enabled" : "GPS is disabled."),
+                  Text("Longitude: $longitude", style: TextStyle(fontSize: 20)),
+                  Text("Latitude: $latitude", style: TextStyle(fontSize: 20)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
-  } 
+  }
 }

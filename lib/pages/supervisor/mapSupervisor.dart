@@ -20,7 +20,8 @@ class MapSupervisor extends StatefulWidget {
 
 class _MapSupervisorState extends State<MapSupervisor> {
   ValueNotifier<GeoPoint?> notifier = ValueNotifier(null);
-  
+
+
   @override
   Widget build(BuildContext context) {
     final notFilledPoints = <LatLng>[
@@ -325,7 +326,7 @@ class _MapSupervisorState extends State<MapSupervisor> {
                 ),
               ),
             ),
-            FloatingActionButton(
+             FloatingActionButton(
                 onPressed: () => showDialog(
                     context: context,
                     builder: (context) {

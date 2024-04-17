@@ -15,8 +15,8 @@ class _LocationAppExampleState extends State<LocationAppExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( 
-        title: Text("Pick an address to mark location"),
+      appBar: AppBar(
+        title: Text("search picker example"),
       ),
       body: Center(
         child: Column(
@@ -36,18 +36,16 @@ class _LocationAppExampleState extends State<LocationAppExample> {
               },
             ),
             Column(
-              children: [ 
-                // ElevatedButton(
-                //   onPressed: () async {
-                //     var p = await Navigator.pushNamed(context, "/search");
-                //     if (p != null) {
-                //       notifier.value = p as GeoPoint;
-                //       print("lat long receiver");
-                //     }
-                //   },
-                //   child: Text("pick address"),
-                // ),
-                
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    var p = await Navigator.pushNamed(context, "/search");
+                    if (p != null) {
+                      notifier.value = p as GeoPoint;
+                    }
+                  },
+                  child: Text("pick address"),
+                ),
                 ElevatedButton(
                   onPressed: () async {
                     var p = await showSimplePickerLocation(
@@ -59,14 +57,13 @@ class _LocationAppExampleState extends State<LocationAppExample> {
                         initZoom: 8,
                       ),
                       initPosition: GeoPoint(
-                        latitude: 27.69803,
-                        longitude: 83.46546,
+                        latitude: 47.4358055,
+                        longitude: 8.4737324,
                       ),
                       radius: 8.0,
                     );
                     if (p != null) {
                       notifier.value = p;
-                      print("picked lat long");
                     }
                   },
                   child: Text("show picker address"),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progressfeed/gps.dart';
+import 'package:progressfeed/live_location.dart';
 import 'package:progressfeed/markers.dart';
 import 'package:progressfeed/pages/common/Notification.dart';
 import 'package:progressfeed/pages/common/Navigations.dart';
@@ -24,7 +25,7 @@ void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: 'mapSupervisor',
+      initialRoute: 'gps',
       routes: {
         'signUpUser': (context) => SignUpUser(),
         'signUpContractor': (context) => SignUpContractor(),
@@ -44,6 +45,7 @@ void main() {
         'moredetails': (context) => CivilConstruction(),
         'gps': (context) => Home(),
         'picker': (context) => LocationAppExample(),
+        'livelocation': (context) => Livelocation(),
         // 'marker': (context) => Marker(),
       },
     ),

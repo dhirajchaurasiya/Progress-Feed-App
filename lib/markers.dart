@@ -10,7 +10,7 @@
 
 // class _MarkerState extends State<Marker> {
 
-//   BaseMapController? baseMapController = MapController.withUserPosition();
+//   BaseMapController? baseMapController ;
 
 //   List<MarkerOption> markers = [
 //   MarkerOption(
@@ -35,7 +35,7 @@
 
 //   Widget _marker() {
 //       return OSMFlutter(
-//         controller: baseMapController!,
+//         controller: BaseMapController,
 //         initialPosition: GeoPoint(latitude: 37.7749, longitude: -122.4194),
 //         zoom: 10.0,
 //         markerOption: markers,
