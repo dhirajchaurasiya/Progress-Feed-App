@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:progressfeed/gps.dart';
 import 'package:progressfeed/pages/common/Notification.dart';
 import 'package:progressfeed/pages/common/Navigations.dart';
 import 'package:progressfeed/pages/common/homePage.dart';
@@ -21,7 +22,7 @@ void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: 'signIn',
+      initialRoute: 'gps',
       routes: {
         'signUpUser': (context) => SignUpUser(),
         'signUpContractor': (context) => SignUpContractor(),
@@ -39,6 +40,7 @@ void main() {
         'supervisorNavigations': (context) => SupervisorNavigation(),
         'userNavigation': (context) => UserNavigation(),
         'moredetails': (context) => CivilConstruction(),
+        'gps': (context) => Home(),
       },
     ),
   );
