@@ -24,7 +24,7 @@ void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: 'picker',
+      initialRoute: 'mapSupervisor',
       routes: {
         'signUpUser': (context) => SignUpUser(),
         'signUpContractor': (context) => SignUpContractor(),

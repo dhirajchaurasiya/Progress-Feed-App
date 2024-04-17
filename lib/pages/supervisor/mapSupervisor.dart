@@ -1,21 +1,26 @@
-// import 'dart:developer'; 
+// import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 // import 'package:flutter_map_example/widgets/drawer.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:progressfeed/pages/moreDetails/civil.dart';
+import 'package:progressfeed/picker.dart';
 
 class MapSupervisor extends StatefulWidget {
   static const String route = 'polygon';
 
-  const MapSupervisor({Key? key}) : super(key: key);
+  MapSupervisor({Key? key}) : super(key: key);
+  
 
   @override
   State<MapSupervisor> createState() => _MapSupervisorState();
 }
 
 class _MapSupervisorState extends State<MapSupervisor> {
+  ValueNotifier<GeoPoint?> notifier = ValueNotifier(null);
+  
   @override
   Widget build(BuildContext context) {
     final notFilledPoints = <LatLng>[
@@ -58,18 +63,6 @@ class _MapSupervisorState extends State<MapSupervisor> {
                                 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                             userAgentPackageName:
                                 'dev.fleaflet.flutter_map.example',
-                          ),
-                          PolygonLayer(
-                            polygons: [
-                              Polygon(
-                                points: notFilledPoints,
-                                isFilled: false,
-                                isDotted: false,
-                                borderColor: Colors.green,
-                                borderStrokeWidth: 4,
-                                color: Colors.yellow,
-                              ),
-                            ],
                           ),
                           MarkerLayer(
                             markers: [
@@ -332,6 +325,71 @@ class _MapSupervisorState extends State<MapSupervisor> {
                 ),
               ),
             ),
+            FloatingActionButton(
+                onPressed: () => showDialog(
+                    context: context,
+                    builder: (context) {
+                      return Container(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              ValueListenableBuilder<GeoPoint?>(
+                                valueListenable: notifier,
+                                builder: (ctx, p, child) {
+                                  return Center(
+                                    child: Text(
+                                      "${p?.toString() ?? ""}",
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                },
+                              ),
+                              Column(
+                                children: [
+                                  // ElevatedButton(
+                                  //   onPressed: () async {
+                                  //     var p = await Navigator.pushNamed(context, "/search");
+                                  //     if (p != null) {
+                                  //       notifier.value = p as GeoPoint;
+                                  //       print("lat long receiver");
+                                  //     }
+                                  //   },
+                                  //   child: Text("pick address"),
+                                  // ),
+
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      var p = await showSimplePickerLocation(
+                                        context: context,
+                                        isDismissible: true,
+                                        title: "location picker",
+                                        textConfirmPicker: "pick",
+                                        zoomOption: ZoomOption(
+                                          initZoom: 8,
+                                        ),
+                                        initPosition: GeoPoint(
+                                          latitude: 27.69803,
+                                          longitude: 83.46546,
+                                        ),
+                                        radius: 8.0,
+                                      );
+                                      if (p != null) {
+                                        notifier.value = p;
+                                        print("picked lat long");
+                                      }
+                                    },
+                                    child: Text("show picker address"),
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }))
           ],
         ),
       ),
