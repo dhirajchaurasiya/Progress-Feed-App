@@ -5,18 +5,18 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart'; // Note: updated import for latlong
 
-void main() {
-  runApp(MyApp());
-}
+// void main() {
+//   runApp(MyApp());
+// }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Home(),
-    );
-  }
-}
+// class MyApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       home: Home(),
+//     );
+//   }
+// }
 
 class Home extends StatefulWidget {
   @override
@@ -96,65 +96,41 @@ class _HomeState extends State<Home> {
         title: Text("Get GPS Location"),
         backgroundColor: Colors.redAccent,
       ),
-      body: Column(
-        children: [
-          Flexible(
-            flex: 1,
-            child: Container(
-              padding: EdgeInsets.all(8.0),
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: latitude.isNotEmpty && longitude.isNotEmpty
-                  ? FlutterMap(
-                      options: MapOptions(
-                        center: LatLng(
+      body: Container(
+        padding: EdgeInsets.all(8.0),
+        height: MediaQuery.of(context).size.height,
+        child: latitude.isNotEmpty && longitude.isNotEmpty
+            ? FlutterMap(
+                options: MapOptions(
+                  center: LatLng(
+                    double.tryParse(latitude) ?? 0.0,
+                    double.tryParse(longitude) ?? 0.0,
+                  ),
+                  zoom: 13.0,
+                ),
+                children: [                                                                           //this initially had layers, changing to children works
+                  TileLayer(                                                                          //this had initially tile layeroptions, replacing with tile layer worked
+                    urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    subdomains: ['a', 'b', 'c'],
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        width: 80.0,
+                        height: 80.0,
+                        point: LatLng(
                           double.tryParse(latitude) ?? 0.0,
                           double.tryParse(longitude) ?? 0.0,
                         ),
-                        zoom: 13.0,
+                        builder: (ctx) => Container(
+                          child: Icon(Icons.location_on, color: Colors.red, size: 40.0),
+                        ),
                       ),
-                      children: [                                                                           //this initially had layers, changing to children works
-                        TileLayer(                                                                          //this had initially tile layeroptions, replacing with tile layer worked
-                          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                          subdomains: ['a', 'b', 'c'],
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              width: 80.0,
-                              height: 80.0,
-                              point: LatLng(
-                                double.tryParse(latitude) ?? 0.0,
-                                double.tryParse(longitude) ?? 0.0,
-                              ),
-                              builder: (ctx) => Container(
-                                child: Icon(Icons.location_on, color: Colors.red, size: 40.0),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  : Center(child: CircularProgressIndicator()),
-            ),
-          ),
-          Flexible(
-            flex: 1,
-            child: Container(
-              alignment: Alignment.center,
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(serviceStatus ? "GPS is Enabled" : "GPS is disabled."),
-                  Text(hasPermission ? "GPS is Enabled" : "GPS is disabled."),
-                  Text("Longitude: $longitude", style: TextStyle(fontSize: 20)),
-                  Text("Latitude: $latitude", style: TextStyle(fontSize: 20)),
+                    ],
+                  ),
                 ],
-              ),
-            ),
-          ),
-        ],
+              )
+            : Center(child: CircularProgressIndicator()),
       ),
     );
   }

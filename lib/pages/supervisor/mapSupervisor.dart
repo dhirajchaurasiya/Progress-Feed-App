@@ -1,9 +1,9 @@
-// import 'dart:developer';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
-// import 'package:flutter_map_example/widgets/drawer.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:progressfeed/pages/moreDetails/civil.dart';
 import 'package:progressfeed/picker.dart';
@@ -19,27 +19,78 @@ class MapSupervisor extends StatefulWidget {
 }
 
 class _MapSupervisorState extends State<MapSupervisor> {
+
+  bool serviceStatus = false;
+  bool hasPermission = false;
+  late LocationPermission permission;
+  late Position position;
+  String longitude = "";
+  String latitude = "";
+  late StreamSubscription<Position> positionStream;
+
   ValueNotifier<GeoPoint?> notifier = ValueNotifier(null);
+
+  @override
+  void initState() {
+    super.initState();
+    checkGps();
+  }
+
+  @override
+  void dispose() {
+    positionStream.cancel();
+    super.dispose();
+  }
+
+  void checkGps() async {
+    serviceStatus = await Geolocator.isLocationServiceEnabled();
+    if (serviceStatus) {
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          print('Location permissions are denied');
+        } else if (permission == LocationPermission.deniedForever) {
+          print("'Location permissions are permanently denied");
+        } else {
+          hasPermission = true;
+        }
+      } else {
+        hasPermission = true;
+      }
+
+      if (hasPermission) {
+        setState(() {});
+        getLocation();
+      }
+    } else {
+      print("GPS Service is not enabled, turn on GPS location");
+    }
+  }
+
+  void getLocation() async {
+    position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    longitude = position.longitude.toString();
+    latitude = position.latitude.toString();
+
+    setState(() {});
+
+    LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 100,
+    );
+
+    positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen((Position position) {
+      longitude = position.longitude.toString();
+      latitude = position.latitude.toString();
+      setState(() {});
+    });
+  }
 
 
   @override
   Widget build(BuildContext context) {
-    final notFilledPoints = <LatLng>[
-      LatLng(28.255560937650856, 83.97735463110831),
-      LatLng(28.255375975133873, 83.97735815694085),
-      LatLng(28.25537493989563, 83.9774854786686),
-      LatLng(28.255382531646333, 83.97748587042747),
-      LatLng(28.255383221806042, 83.97759164540321),
-      LatLng(
-        28.25556162780849,
-        83.9775873360528,
-      ),
-      LatLng(
-        28.255560937650856,
-        83.97735463110831,
-      ),
-    ];
-
+    
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -51,262 +102,275 @@ class _MapSupervisorState extends State<MapSupervisor> {
                     height: MediaQuery.of(context).size.height,
                     width: MediaQuery.of(context).size.width,
                     //margin: EdgeInsets.zero,
-                    child: Flexible(
-                      child: FlutterMap(
-                        options: MapOptions(
-                          center: LatLng(28.255560937650856, 83.97735463110831),
-                          zoom: 17,
-                          maxZoom: 19,
+                    child: latitude.isNotEmpty && longitude.isNotEmpty ? FlutterMap(
+                      options: MapOptions(
+                  center: LatLng(
+                    double.tryParse(latitude) ?? 0.0,
+                    double.tryParse(longitude) ?? 0.0,
+                  ),
+                  zoom: 13.0,
+                ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName:
+                              'dev.fleaflet.flutter_map.example',
                         ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName:
-                                'dev.fleaflet.flutter_map.example',
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: LatLng(
-                                    28.255560937650856, 83.97735463110831),
-                                width: 80,
-                                height: 80,
-                                builder: (context) => TextButton(
-                                  onPressed: () {
-                                    CivilMap(context);
-                                  },
-                                  child: Icon(
-                                    Icons.location_on_rounded,
-                                    color: Colors.red,
-                                    size: 50,
-                                  ),
-                                ),
-                              ),
-                              Marker(
-                                point: LatLng(28.253763, 83.975427),
-                                width: 80,
-                                height: 80,
-                                builder: (context) => TextButton(
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                        enableDrag: true,
-                                        isDismissible: true,
-                                        elevation: 10,
-                                        shape: BeveledRectangleBorder(
-                                          borderRadius: BorderRadius.only(
-                                              topRight: Radius.circular(15),
-                                              topLeft: Radius.circular(15)),
-                                        ),
-                                        backgroundColor:
-                                            Colors.white.withOpacity(0.7),
-                                        context: context,
-                                        builder: (context) {
-                                          return SingleChildScrollView(
-                                              child: Column(
-                                            children: [
-                                              Text(
-                                                "Seti side Road Construction",
-                                                style: TextStyle(
-                                                    fontSize: 25,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(
-                                                height: 15,
-                                              ),
-                                              Text("Started on june 23 2020"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text("Budget:5 Crore"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "Contractor name:Raman Constructions"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "Location: Pokhara Lamachaur"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "For morer details click below"),
-                                              SizedBox(
-                                                height: 15,
-                                              ),
-                                              TextButton(
-                                                onPressed: () {},
-                                                child: Text("more details"),
-                                              )
-                                            ],
-                                          ));
-                                        });
-                                  },
-                                  child: Icon(
-                                    Icons.location_on_rounded,
-                                    color: Colors.red,
-                                    size: 50,
-                                  ),
-                                ),
-                              ),
-                              Marker(
-                                point: LatLng(28.253958, 83.976736),
-                                width: 80,
-                                height: 80,
-                                builder: (context) => TextButton(
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                        enableDrag: true,
-                                        isDismissible: true,
-                                        elevation: 10,
-                                        shape: BeveledRectangleBorder(
-                                          borderRadius: BorderRadius.only(
-                                              topRight: Radius.circular(15),
-                                              topLeft: Radius.circular(15)),
-                                        ),
-                                        backgroundColor:
-                                            Colors.white.withOpacity(0.7),
-                                        context: context,
-                                        builder: (context) {
-                                          return SingleChildScrollView(
-                                              child: Column(
-                                            children: [
-                                              Text(
-                                                "ABC Hspital ,Pokhara Lamachaur",
-                                                style: TextStyle(
-                                                    fontSize: 25,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(
-                                                height: 15,
-                                              ),
-                                              Text("Started on june 23 2020"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text("Budget:5 Crore"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "Contractor name:Raman Constructions"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "Location: Pokhara Lamachaur"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "For morer details click below"),
-                                              SizedBox(
-                                                height: 15,
-                                              ),
-                                              TextButton(
-                                                onPressed: () {},
-                                                child: Text("more details"),
-                                              )
-                                            ],
-                                          ));
-                                        });
-                                  },
-                                  child: Icon(
-                                    Icons.location_on_rounded,
-                                    color: Colors.red,
-                                    size: 50,
-                                  ),
-                                ),
-                              ),
-                              Marker(
-                                point: LatLng(28.254466, 83.977641),
-                                width: 80,
-                                height: 80,
-                                builder: (context) => TextButton(
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                        enableDrag: true,
-                                        isDismissible: true,
-                                        elevation: 10,
-                                        shape: BeveledRectangleBorder(
-                                          borderRadius: BorderRadius.only(
-                                              topRight: Radius.circular(15),
-                                              topLeft: Radius.circular(15)),
-                                        ),
-                                        backgroundColor:
-                                            Colors.white.withOpacity(0.7),
-                                        context: context,
-                                        builder: (context) {
-                                          return SingleChildScrollView(
-                                              child: Column(
-                                            children: [
-                                              Text(
-                                                "XYZ University ,Pokhara Lamachaur",
-                                                style: TextStyle(
-                                                    fontSize: 25,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(
-                                                height: 15,
-                                              ),
-                                              Text("Started on june 23 2020"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text("Budget:5 Crore"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "Contractor name:Raman Constructions"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "Location: Pokhara Lamachaur"),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Text(
-                                                  "For morer details click below"),
-                                              SizedBox(
-                                                height: 15,
-                                              ),
-                                              TextButton(
-                                                onPressed: () {},
-                                                child: Text("more details"),
-                                              )
-                                            ],
-                                          ));
-                                        });
-                                  },
-                                  child: Icon(
-                                    Icons.location_on_rounded,
-                                    color: Colors.red,
-                                    size: 50,
-                                  ),
-                                ),
-                              ),
-                              Marker(
-                                point: LatLng(28.259754, 83.981108),
-                                width: 80,
-                                height: 80,
-                                builder: (context) => Icon(
-                                  Icons.circle,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                        MarkerLayer(
+                          markers: [
+                            //User live location pointing marker
+                            Marker(
+                        width: 80.0,
+                        height: 80.0,
+                        point: LatLng(
+                          double.tryParse(latitude) ?? 0.0,
+                          double.tryParse(longitude) ?? 0.0,
+                        ),
+                        builder: (ctx) => Container(
+                          child: Icon(Icons.location_on, color: Colors.blue, size: 40.0),
+                        ),
                       ),
-                    ),
+                            Marker(
+                              point: LatLng(
+                                  28.255560937650856, 83.97735463110831),
+                              width: 80,
+                              height: 80,
+                              builder: (context) => TextButton(
+                                onPressed: () {
+                                  CivilMap(context);
+                                },
+                                child: Icon(
+                                  Icons.location_on_rounded,
+                                  color: Colors.red,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                            Marker(
+                              point: LatLng(28.253763, 83.975427),
+                              width: 80,
+                              height: 80,
+                              builder: (context) => TextButton(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                      enableDrag: true,
+                                      isDismissible: true,
+                                      elevation: 10,
+                                      shape: BeveledRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                            topRight: Radius.circular(15),
+                                            topLeft: Radius.circular(15)),
+                                      ),
+                                      backgroundColor:
+                                          Colors.white.withOpacity(0.7),
+                                      context: context,
+                                      builder: (context) {
+                                        return SingleChildScrollView(
+                                            child: Column(
+                                          children: [
+                                            Text(
+                                              "Seti side Road Construction",
+                                              style: TextStyle(
+                                                  fontSize: 25,
+                                                  fontWeight:
+                                                      FontWeight.bold),
+                                            ),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            Text("Started on june 23 2020"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text("Budget:5 Crore"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "Contractor name:Raman Constructions"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "Location: Pokhara Lamachaur"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "For morer details click below"),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            TextButton(
+                                              onPressed: () {},
+                                              child: Text("more details"),
+                                            )
+                                          ],
+                                        ));
+                                      });
+                                },
+                                child: Icon(
+                                  Icons.location_on_rounded,
+                                  color: Colors.red,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                            Marker(
+                              point: LatLng(28.253958, 83.976736),
+                              width: 80,
+                              height: 80,
+                              builder: (context) => TextButton(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                      enableDrag: true,
+                                      isDismissible: true,
+                                      elevation: 10,
+                                      shape: BeveledRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                            topRight: Radius.circular(15),
+                                            topLeft: Radius.circular(15)),
+                                      ),
+                                      backgroundColor:
+                                          Colors.white.withOpacity(0.7),
+                                      context: context,
+                                      builder: (context) {
+                                        return SingleChildScrollView(
+                                            child: Column(
+                                          children: [
+                                            Text(
+                                              "ABC Hspital ,Pokhara Lamachaur",
+                                              style: TextStyle(
+                                                  fontSize: 25,
+                                                  fontWeight:
+                                                      FontWeight.bold),
+                                            ),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            Text("Started on june 23 2020"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text("Budget:5 Crore"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "Contractor name:Raman Constructions"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "Location: Pokhara Lamachaur"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "For morer details click below"),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            TextButton(
+                                              onPressed: () {},
+                                              child: Text("more details"),
+                                            )
+                                          ],
+                                        ));
+                                      });
+                                },
+                                child: Icon(
+                                  Icons.location_on_rounded,
+                                  color: Colors.red,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                            Marker(
+                              point: LatLng(28.254466, 83.977641),
+                              width: 80,
+                              height: 80,
+                              builder: (context) => TextButton(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                      enableDrag: true,
+                                      isDismissible: true,
+                                      elevation: 10,
+                                      shape: BeveledRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                            topRight: Radius.circular(15),
+                                            topLeft: Radius.circular(15)),
+                                      ),
+                                      backgroundColor:
+                                          Colors.white.withOpacity(0.7),
+                                      context: context,
+                                      builder: (context) {
+                                        return SingleChildScrollView(
+                                            child: Column(
+                                          children: [
+                                            Text(
+                                              "XYZ University ,Pokhara Lamachaur",
+                                              style: TextStyle(
+                                                  fontSize: 25,
+                                                  fontWeight:
+                                                      FontWeight.bold),
+                                            ),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            Text("Started on june 23 2020"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text("Budget:5 Crore"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "Contractor name:Raman Constructions"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "Location: Pokhara Lamachaur"),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                                "For morer details click below"),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            TextButton(
+                                              onPressed: () {},
+                                              child: Text("more details"),
+                                            )
+                                          ],
+                                        ));
+                                      });
+                                },
+                                child: Icon(
+                                  Icons.location_on_rounded,
+                                  color: Colors.red,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                            Marker(
+                              point: LatLng(28.259754, 83.981108),
+                              width: 80,
+                              height: 80,
+                              builder: (context) => Icon(
+                                Icons.circle,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                    : Center(child: CircularProgressIndicator(),),
                   ),
                 ],
               ),
