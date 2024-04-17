@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progressfeed/gps.dart';
+import 'package:progressfeed/markers.dart';
 import 'package:progressfeed/pages/common/Notification.dart';
 import 'package:progressfeed/pages/common/Navigations.dart';
 import 'package:progressfeed/pages/common/homePage.dart';
@@ -17,12 +18,13 @@ import 'package:progressfeed/pages/supervisor/signUp_Supervisor.dart';
 import 'package:progressfeed/pages/supervisor/supervisorNavigation.dart';
 import 'package:progressfeed/pages/user/signUp_User.dart';
 import 'package:progressfeed/pages/user/userNavigation.dart';
+import 'package:progressfeed/picker.dart';
 
 void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: 'gps',
+      initialRoute: 'picker',
       routes: {
         'signUpUser': (context) => SignUpUser(),
         'signUpContractor': (context) => SignUpContractor(),
@@ -41,6 +43,8 @@ void main() {
         'userNavigation': (context) => UserNavigation(),
         'moredetails': (context) => CivilConstruction(),
         'gps': (context) => Home(),
+        'picker': (context) => LocationAppExample(),
+        // 'marker': (context) => Marker(),
       },
     ),
   );
