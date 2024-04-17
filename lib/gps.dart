@@ -112,8 +112,8 @@ class _HomeState extends State<Home> {
                         ),
                         zoom: 13.0,
                       ),
-                      children: [
-                        TileLayer(
+                      children: [                                                                           //this initially had layers, changing to children works
+                        TileLayer(                                                                          //this had initially tile layeroptions, replacing with tile layer worked
                           urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                           subdomains: ['a', 'b', 'c'],
                         ),
@@ -159,3 +159,15 @@ class _HomeState extends State<Home> {
     );
   }
 }
+
+
+
+
+
+/*visited documentations:
+modified chatgpt code ig
+https://chat.openai.com/c/01c4d8fd-0b23-4468-8925-a64d1c840810
+https://github.com/fleaflet/flutter_map
+https://pub.dev/packages/flutter_map_location_marker/example
+https://github.com/tlserver/flutter_map_location_marker/blob/main/example/lib/page/minimum_example.dart
+*/
