@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:provider/provider.dart';
+import 'package:progressfeed/providers/location_provider.dart';
 
 class LocationAppExample extends StatefulWidget {
   @override
@@ -10,8 +11,6 @@ class LocationAppExample extends StatefulWidget {
 }
 
 class _LocationAppExampleState extends State<LocationAppExample> {
-  ValueNotifier<GeoPoint?> notifier = ValueNotifier(null);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,12 +23,11 @@ class _LocationAppExampleState extends State<LocationAppExample> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ValueListenableBuilder<GeoPoint?>(
-              valueListenable: notifier,
-              builder: (ctx, p, child) {
+            Consumer<LocationProvider>(
+              builder: (context, locationProvider, child) {
                 return Center(
                   child: Text(
-                    "${p?.toString() ?? ""}",
+                    "${locationProvider.selectedLocation?.toString() ?? ""}",
                     textAlign: TextAlign.center,
                   ),
                 );
@@ -41,7 +39,9 @@ class _LocationAppExampleState extends State<LocationAppExample> {
                   onPressed: () async {
                     var p = await Navigator.pushNamed(context, "/search");
                     if (p != null) {
-                      notifier.value = p as GeoPoint;
+                      context
+                          .read<LocationProvider>()
+                          .setSelectedLocation(p as GeoPoint);
                     }
                   },
                   child: Text("pick address"),
@@ -63,7 +63,7 @@ class _LocationAppExampleState extends State<LocationAppExample> {
                       radius: 8.0,
                     );
                     if (p != null) {
-                      notifier.value = p;
+                      context.read<LocationProvider>().setSelectedLocation(p);
                     }
                   },
                   child: Text("show picker address"),
@@ -119,59 +119,55 @@ class _SearchPageState extends State<SearchPage> {
           children: [
             Row(
               children: [
-                PointerInterceptor(
-                  child: TextButton(
-                    style: TextButton.styleFrom(),
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                    ),
+                TextButton(
+                  style: TextButton.styleFrom(),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Icon(
+                    Icons.arrow_back_ios,
                   ),
                 ),
                 Expanded(
-                  child: PointerInterceptor(
-                    child: TextField(
-                      controller: textEditingController,
-                      onEditingComplete: () async {
-                        FocusScope.of(context).requestFocus(new FocusNode());
-                      },
+                  child: TextField(
+                    controller: textEditingController,
+                    onEditingComplete: () async {
+                      FocusScope.of(context).requestFocus(new FocusNode());
+                    },
                       decoration: InputDecoration(
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: Colors.black,
-                        ),
-                        suffix: ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: textEditingController,
-                          builder: (ctx, text, child) {
-                            if (text.text.isNotEmpty) {
-                              return child!;
-                            }
-                            return SizedBox.shrink();
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.black,
+                      ),
+                      suffix: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: textEditingController,
+                        builder: (ctx, text, child) {
+                          if (text.text.isNotEmpty) {
+                            return child!;
+                          }
+                          return SizedBox.shrink();
+                        },
+                        child: InkWell(
+                          focusNode: FocusNode(),
+                          onTap: () {
+                            textEditingController.clear();
+                            controller.setSearchableText("");
+                            FocusScope.of(context)
+                                .requestFocus(new FocusNode());
                           },
-                          child: InkWell(
-                            focusNode: FocusNode(),
-                            onTap: () {
-                              textEditingController.clear();
-                              controller.setSearchableText("");
-                              FocusScope.of(context)
-                                  .requestFocus(new FocusNode());
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.black,
-                            ),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.black,
                           ),
                         ),
-                        focusColor: Colors.black,
-                        filled: true,
-                        hintText: "search",
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        fillColor: Colors.grey[300],
-                        errorBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.red),
-                        ),
+                      ),
+                      focusColor: Colors.black,
+                      filled: true,
+                      hintText: "search",
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      fillColor: Colors.grey[300],
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red),
                       ),
                     ),
                   ),
@@ -188,14 +184,12 @@ class _SearchPageState extends State<SearchPage> {
       bottomWidgetPicker: Positioned(
         bottom: 12,
         right: 8,
-        child: PointerInterceptor(
-          child: FloatingActionButton(
-            onPressed: () async {
-              GeoPoint p = await controller.selectAdvancedPositionPicker();
-              Navigator.pop(context, p);
-            },
-            child: Icon(Icons.arrow_forward),
-          ),
+        child: FloatingActionButton(
+          onPressed: () async {
+            GeoPoint p = await controller.selectAdvancedPositionPicker();
+            Navigator.pop(context, p);
+          },
+          child: Icon(Icons.arrow_forward),
         ),
       ),
       pickerConfig: CustomPickerLocationConfig(
@@ -214,9 +208,6 @@ class TopSearchWidget extends StatefulWidget {
 
 class _TopSearchWidgetState extends State<TopSearchWidget> {
   late PickerMapController controller;
-  ValueNotifier<GeoPoint?> notifierGeoPoint = ValueNotifier(null);
-  ValueNotifier<bool> notifierAutoCompletion = ValueNotifier(false);
-
   late StreamController<List<SearchInfo>> streamSuggestion = StreamController();
   late Future<List<SearchInfo>> _futureSuggestionAddress;
   String oldText = "";
@@ -232,8 +223,12 @@ class _TopSearchWidgetState extends State<TopSearchWidget> {
 
   void onSearchableTextChanged() async {
     final v = controller.searchableText.value;
+    final locationProvider = context.read<LocationProvider>();
+    
     if (v.length > 3 && oldText != v) {
       oldText = v;
+      locationProvider.setSearchText(v);
+      
       if (_timerToStartSuggestionReq != null &&
           _timerToStartSuggestionReq!.isActive) {
         _timerToStartSuggestionReq!.cancel();
@@ -246,11 +241,12 @@ class _TopSearchWidgetState extends State<TopSearchWidget> {
     }
     if (v.isEmpty) {
       await reInitStream();
+      locationProvider.clearSearchText();
     }
   }
 
   Future reInitStream() async {
-    notifierAutoCompletion.value = false;
+    context.read<LocationProvider>().setAutoCompletionVisible(false);
     await streamSuggestion.close();
     setState(() {
       streamSuggestion = StreamController();
@@ -258,13 +254,16 @@ class _TopSearchWidgetState extends State<TopSearchWidget> {
   }
 
   Future<void> suggestionProcessing(String addr) async {
-    notifierAutoCompletion.value = true;
+    final locationProvider = context.read<LocationProvider>();
+    locationProvider.setAutoCompletionVisible(true);
+    
     _futureSuggestionAddress = addressSuggestion(
       addr,
       limitInformation: 5,
     );
     _futureSuggestionAddress.then((value) {
       streamSuggestion.sink.add(value);
+      locationProvider.setSuggestions(value);
     });
   }
 
@@ -276,63 +275,61 @@ class _TopSearchWidgetState extends State<TopSearchWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: notifierAutoCompletion,
-      builder: (ctx, isVisible, child) {
+    return Consumer<LocationProvider>(
+      builder: (context, locationProvider, child) {
         return AnimatedContainer(
           duration: Duration(
             milliseconds: 500,
           ),
-          height: isVisible ? MediaQuery.of(context).size.height / 4 : 0,
+          height: locationProvider.isAutoCompletionVisible
+              ? MediaQuery.of(context).size.height / 4
+              : 0,
           child: Card(
-            child: child!,
+            child: StreamBuilder<List<SearchInfo>>(
+              stream: streamSuggestion.stream,
+              key: streamKey,
+              builder: (ctx, snap) {
+                if (snap.hasData) {
+                  return ListView.builder(
+                    itemExtent: 50.0,
+                    itemBuilder: (ctx, index) {
+                      return ListTile(
+                        title: Text(
+                          snap.data![index].address.toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.fade,
+                        ),
+                        onTap: () async {
+                          /// go to location selected by address
+                          controller.goToLocation(
+                            snap.data![index].point!,
+                          );
+
+                          /// hide suggestion card
+                          locationProvider.setAutoCompletionVisible(false);
+                          await reInitStream();
+                          FocusScope.of(context).requestFocus(
+                            new FocusNode(),
+                          );
+                        },
+                      );
+                    },
+                    itemCount: snap.data!.length,
+                  );
+                }
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return Card(
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                return SizedBox();
+              },
+            ),
           ),
         );
       },
-      child: StreamBuilder<List<SearchInfo>>(
-        stream: streamSuggestion.stream,
-        key: streamKey,
-        builder: (ctx, snap) {
-          if (snap.hasData) {
-            return ListView.builder(
-              itemExtent: 50.0,
-              itemBuilder: (ctx, index) {
-                return PointerInterceptor(
-                  child: ListTile(
-                    title: Text(
-                      snap.data![index].address.toString(),
-                      maxLines: 1,
-                      overflow: TextOverflow.fade,
-                    ),
-                    onTap: () async {
-                      /// go to location selected by address
-                      controller.goToLocation(
-                        snap.data![index].point!,
-                      );
-
-                      /// hide suggestion card
-                      notifierAutoCompletion.value = false;
-                      await reInitStream();
-                      FocusScope.of(context).requestFocus(
-                        new FocusNode(),
-                      );
-                    },
-                  ),
-                );
-              },
-              itemCount: snap.data!.length,
-            );
-          }
-          if (snap.connectionState == ConnectionState.waiting) {
-            return Card(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-          return SizedBox();
-        },
-      ),
     );
   }
 }
